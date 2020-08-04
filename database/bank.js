@@ -47,10 +47,12 @@ class Bank extends Model {
 
     static async updateMoney(bankname, money, t) {
         return await Bank.update({
-            money
+            storageMoney: money
         }, {
             where: {
-                bankname
+                bankname: {
+                    [Op.eq]: bankname
+                }
             },
             transaction: t
         })

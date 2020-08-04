@@ -91,71 +91,83 @@ app.post('/verify', (req, res) => {
             return res.json({ "statusCode": 401, "err": "Can not find bank select" });
         }
 
-        console.log(findbanksend.storageMoney < parseInt(money));
-
         if (findbanksend.storageMoney < parseInt(money)) {
             return res.json({ "statusCode": 401, "err": "Money not enough" });
         }
 
         let t = await db.transaction();
         try {
-            let moneyselect = findbankselect.money + parseInt(money);
-            let moneysend = findbanksend.money - parseInt(money);
-            await Bank.updateMoney(bankselect, moneyselect, t);
-            await Bank.updateMoney(decoded.bank, moneysend, t);
+            var resultaxios;
+            var error;
+            let moneyselect = parseInt(findbankselect.storageMoney) + parseInt(money);
+            let moneysend = parseInt(findbanksend.storageMoney) - parseInt(money);
+            console.log(moneyselect);
+            console.log(moneysend);
+            const update1 = await Bank.updateMoney(bankselect, moneyselect, t);
+            const update2 = await Bank.updateMoney(decoded.bank, moneysend, t);
+            if (update1[0] === 0 || update2[0] === 0) {
+                throw "Cannot update money in storageMoney";
+            }
             if (findbankselect.bankname === "NBV") {
-                axios({
+                await axios({
                     method: 'post',
                     url: `${findbankselect.base_url}/gettoken`,
                     headers: {
                         email: 'lqvinh243@gmail.com',
                         password: '123456'
                     }
-                }).then((result) => {
+                }).then(async (result) => {
                     if (result.status !== 200) {
-                        throw new Error("Cannot gettoken in NBV");
+                        error = true;
                     }
+                    resultaxios = result.data;
                     if (result.data.statusCode != 200) {
-                        throw new (Errorresult.data.message);
+                        //do nothing
                     }
-                    let tokenget = result.data.token;
-                    let privateKeyToken = result.data.privateKey;
+                    else {
+                        let tokenget = result.data.token;
+                        let privateKeyToken = result.data.privateKey;
 
-                    axios({
-                        method: 'post',
-                        url: `${findbankselect.base_url}/updatemoney`,
-                        data: {
-                            bankname,
-                            money,
-                            content,
-                            idsend,
-                            idrecive
-                        },
-                        headers: {
-                            email: 'lqvinh243@gmail.com',
-                            token: tokenget,
-                            privatekey: privateKeyToken
-                        }
-                    }).then((result2) => {
-                        if (result.status !== 200) {
-                            throw new Error("Cannot update money in NBV");
-                        }
-                        if (result2.data.statusCode != 200) {
-                            throw new Error(result2.data.message);
-                        }
-                    });
+                        await axios({
+                            method: 'post',
+                            url: `${findbankselect.base_url}/updatemoney`,
+                            data: {
+                                bankname,
+                                money,
+                                content,
+                                idsend,
+                                idrecive
+                            },
+                            headers: {
+                                email: 'lqvinh243@gmail.com',
+                                token: tokenget,
+                                privatekey: privateKeyToken
+                            }
+                        }).then((result2) => {
+                            resultaxios = result2.data;
+                            if (result.status !== 200) {
+                                error = true;
+                            }
+                        });
+                    }
                 })
+            }
+            if (error) {
+                throw "Cannot get api";
+            }
+            if (resultaxios.statusCode != 200) {
+                throw resultaxios.message;
             }
             await t.commit();
             return res.json({ "statusCode": 200, "message": "Chuyển tiền thành công!" });
         } catch (err) {
             console.log(err);
             await t.rollback();
-            res.json({ "statusCode": 404, "message": "Chuyển tiền thất bại!" });
+            res.json({ "statusCode": 404, "message": "Chuyển tiền thất bại!", "Detail": err });
         }
     });
 })
 
-db.sync({ force: true }).then(() => {
+db.sync().then(() => {
     app.listen(process.env.PORT || 3000);
 })
