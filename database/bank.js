@@ -10,6 +10,14 @@ class Bank extends Model {
             }
         });
     }
+
+    static async findBaseurl(base_url) {
+        return await Bank.findOne({
+            where: {
+                base_url
+            }
+        });
+    }
     static hashPassword(password) {
         return bcrypt.hashSync(password, 10);
     }
@@ -18,10 +26,11 @@ class Bank extends Model {
         return bcrypt.compareSync(password, hashPassword);
     }
 
-    static async createBank(bankname, password) {
+    static async createBank(bankname, password, base_url) {
         return await Bank.create({
             bankname,
-            password: Bank.hashPassword(password)
+            password: Bank.hashPassword(password),
+            base_url
         });
     }
 
@@ -61,6 +70,10 @@ Bank.init({
         type: DataTypes.DECIMAL,
         allowNull: false,
         defaultValue: 0
+    },
+    base_url: {
+        type: DataTypes.STRING,
+        allowNull: false,
     }
 }, {
     sequelize: db,

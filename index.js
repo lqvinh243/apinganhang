@@ -15,7 +15,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.post('/createbank', asyncHandler(async (req, res) => {
     let auth = "lqvinh243";
     let bank = req.headers["auth"];
-    let { bankname, password } = req.body;
+    let { bankname, password, base_url } = req.body;
     if (!bank || bank !== auth) {
         return res.json({ "statusCode": 401, "err": "Cannot authencation!" });
     }
@@ -23,8 +23,9 @@ app.post('/createbank', asyncHandler(async (req, res) => {
         return res.json({ "statusCode": 401, "err": "Invalid input!" });
     }
     const find = await bank.findBank(bankname);
-    if (find) return res.json({ "statusCode": 401, "err": "Bank already!" });
-    await bank.createBank(bankname, password);
+    const findurl = await bank.findBank(base_url);
+    if (find || base_url) return res.json({ "statusCode": 401, "err": "Bank or Base_Url already!" });
+    await bank.createBank(bankname, password, base_url);
     res.json({ "statusCode": 200, "message": "Register bankname successs!" });
 }));
 
@@ -53,7 +54,7 @@ app.post('/sign', asyncHandler(async (req, res) => {
         return res.json({ "statusCode": 401, "error": "Cant not verify bank" });
     }
     var privateKey = rand.generate();
-    jwt.sign({ bank: find.bankname }, privateKey, { expiresIn: '7m'}, function (err, token) {
+    jwt.sign({ bank: find.bankname }, privateKey, { expiresIn: '7m' }, function (err, token) {
         if (err) {
             return res.json({ "statusCode": 404, "err": err });
         }
@@ -90,7 +91,9 @@ app.post('/verify', (req, res) => {
             return res.json({ "statusCode": 401, "err": "Can not find bank select" });
         }
 
-        if (bankname.storageMoney < parseInt(money)) {
+        console.log(findbanksend.storageMoney < parseInt(money));
+
+        if (findbanksend.storageMoney < parseInt(money)) {
             return res.json({ "statusCode": 401, "err": "Money not enough" });
         }
 
@@ -103,25 +106,24 @@ app.post('/verify', (req, res) => {
             if (findbankselect.bankname === "NBV") {
                 axios({
                     method: 'post',
-                    url: 'https://doanweb2-2020.herokuapp.com/gettoken',
+                    url: `${findbankselect.base_url}/gettoken`,
                     headers: {
                         email: 'lqvinh243@gmail.com',
                         password: '123456'
                     }
                 }).then((result) => {
-                    if(result.status!==200){
+                    if (result.status !== 200) {
                         throw "Cannot gettoken in NBV";
                     }
                     if (result.data.statusCode != 200) {
                         throw result.data.message;
                     }
-                    console.log(result);
                     let tokenget = result.data.token;
                     let privateKeyToken = result.data.privateKey;
 
                     axios({
                         method: 'post',
-                        url: 'https://doanweb2-2020.herokuapp.com/updatemoney',
+                        url: `${findbankselect.base_url}/updatemoney`,
                         data: {
                             bankname,
                             money,
@@ -135,7 +137,7 @@ app.post('/verify', (req, res) => {
                             privatekey: privateKeyToken
                         }
                     }).then((result2) => {
-                        if(result.status!==200){
+                        if (result.status !== 200) {
                             throw "Cannot update money in NBV";
                         }
                         if (result2.data.statusCode != 200) {
@@ -145,7 +147,7 @@ app.post('/verify', (req, res) => {
                 })
             }
             await t.commit();
-            return res.json({ "statusCode": 201, "message": "Chuyển tiền thành công!" });
+            return res.json({ "statusCode": 200, "message": "Chuyển tiền thành công!" });
         } catch (err) {
             console.log(err);
             await t.rollback();
@@ -154,6 +156,6 @@ app.post('/verify', (req, res) => {
     });
 })
 
-db.sync().then(() => {
+db.sync({ force:true }).then(() => {
     app.listen(process.env.PORT || 3000);
 })
