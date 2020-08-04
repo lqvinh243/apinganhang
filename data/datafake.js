@@ -3,7 +3,7 @@ const bank = require('./../database/bank');
 
 
 db.sync().then(async () => {
-    var bankname = "banktest";
+    var bankname = "NH01";
     var find = await bank.findBank(bankname);
     if (!find) {
         await bank.createBank(bankname, '123456');
