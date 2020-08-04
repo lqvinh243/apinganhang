@@ -153,5 +153,5 @@ app.post('/verify', (req, res) => {
 })
 
 db.sync().then(() => {
-    app.listen(3000);
+    app.listen(process.env.PORT || 3000);
 })
