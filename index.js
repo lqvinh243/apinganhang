@@ -19,6 +19,9 @@ app.post('/createbank', asyncHandler(async (req, res) => {
     if (!bank || bank !== auth) {
         return res.json({ "statusCode": 401, "err": "Cannot authencation!" });
     }
+    if (!bankname || !password) {
+        return res.json({ "statusCode": 401, "err": "Invalid input!" });
+    }
     const find = await bank.findBank(bankname);
     if (find) return res.json({ "statusCode": 401, "err": "Bank already!" });
     await bank.createBank(bankname, password);
