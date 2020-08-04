@@ -55,7 +55,7 @@ app.post('/verify', (req, res) => {
         return res.json({ "err": "Invalid token" });
     }
 
-    jwt.verify(token, privateKey, function (err, decoded) {
+    jwt.verify(token, privateKey, async (err, decoded) => {
         if (err) {
             return res.json({ "statusCode": 401, "err": err });
         }
