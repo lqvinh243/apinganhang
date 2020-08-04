@@ -53,7 +53,7 @@ app.post('/sign', asyncHandler(async (req, res) => {
         return res.json({ "statusCode": 401, "error": "Cant not verify bank" });
     }
     var privateKey = rand.generate();
-    jwt.sign({ bank: find.bankname }, privateKey, function (err, token) {
+    jwt.sign({ bank: find.bankname }, privateKey, { expiresIn: '7m'}, function (err, token) {
         if (err) {
             return res.json({ "statusCode": 404, "err": err });
         }
@@ -104,20 +104,20 @@ app.post('/verify', (req, res) => {
                 axios({
                     method: 'post',
                     url: 'https://doanweb2-2020.herokuapp.com/gettoken',
-                    data: {
-                        firstName: 'Fred',
-                        lastName: 'Flintstone'
-                    },
                     headers: {
                         email: 'lqvinh243@gmail.com',
                         password: '123456'
                     }
                 }).then((result) => {
-                    if (res.statusCode != 200) {
-                        return res.json({ "statusCode": 404, "message": res.message });
+                    if(result.status!==200){
+                        throw "Cannot gettoken in NBV";
                     }
-                    let tokenget = result.token;
-                    let privateKeyToken = result.privateKey;
+                    if (result.data.statusCode != 200) {
+                        throw result.data.message;
+                    }
+                    console.log(result);
+                    let tokenget = result.data.token;
+                    let privateKeyToken = result.data.privateKey;
 
                     axios({
                         method: 'post',
@@ -135,11 +135,13 @@ app.post('/verify', (req, res) => {
                             privatekey: privateKeyToken
                         }
                     }).then((result2) => {
-                        if (res.statusCode != 200) {
-                            return res.json(result2);
+                        if(result.status!==200){
+                            throw "Cannot update money in NBV";
                         }
-                        res.json(result2);
-                    })
+                        if (result2.data.statusCode != 200) {
+                            throw result2.data.message;
+                        }
+                    });
                 })
             }
             await t.commit();
