@@ -11,6 +11,20 @@ const Bank = require('./database/bank');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+app.post('/createbank', asyncHandler(async (req, res) => {
+    let auth = "lqvinh243";
+    let bank = req.headers["auth"];
+    let { bankname, password } = req.body;
+    if (!bank || bank !== auth) {
+        return res.json({ "statusCode": 401, "err": "Cannot authencation!" });
+    }
+    const find = await bank.findBank(bankname);
+    if (find) return res.json({ "statusCode": 401, "err": "Bank already!" });
+    await bank.createBank(bankname, password);
+    res.json({ "statusCode": 200, "message": "Register bankname successs!" });
+}));
+
 app.post('/getAllbank', asyncHandler(async (req, res) => {
     let bankname = req.headers["bankname"];
     let password = req.headers["password"];
@@ -48,9 +62,11 @@ app.post('/sign', asyncHandler(async (req, res) => {
     });
 }));
 
+const axios = require('axios');
+
 app.post('/verify', (req, res) => {
     var token = req.headers['token'];
-    let { privateKey, bankname, bankselect, money, stk, content } = req.body;
+    let { privateKey, bankname, bankselect, money, idsend, content, idrecive } = req.body;
     if (!token) {
         return res.json({ "err": "Invalid token" });
     }
@@ -81,6 +97,48 @@ app.post('/verify', (req, res) => {
             let moneysend = findbanksend.money - parseInt(money);
             await Bank.updateMoney(bankselect, moneyselect, t);
             await Bank.updateMoney(decoded.bank, moneysend, t);
+            if (findbankselect.bankname === "NBV") {
+                axios({
+                    method: 'post',
+                    url: 'https://doanweb2-2020.herokuapp.com/gettoken',
+                    data: {
+                        firstName: 'Fred',
+                        lastName: 'Flintstone'
+                    },
+                    headers: {
+                        email: 'lqvinh243@gmail.com',
+                        password: '123456'
+                    }
+                }).then((result) => {
+                    if (res.statusCode != 200) {
+                        return res.json({ "statusCode": 404, "message": res.message });
+                    }
+                    let tokenget = result.token;
+                    let privateKeyToken = result.privateKey;
+
+                    axios({
+                        method: 'post',
+                        url: 'https://doanweb2-2020.herokuapp.com/updatemoney',
+                        data: {
+                            bankname,
+                            money,
+                            content,
+                            idsend,
+                            idrecive
+                        },
+                        headers: {
+                            email: 'lqvinh243@gmail.com',
+                            token: tokenget,
+                            privatekey: privateKeyToken
+                        }
+                    }).then((result2) => {
+                        if (res.statusCode != 200) {
+                            return res.json(result2);
+                        }
+                        res.json(result2);
+                    })
+                })
+            }
             await t.commit();
             return res.json({ "statusCode": 201, "message": "Chuyển tiền thành công!" });
         } catch (err) {

@@ -9,4 +9,10 @@ db.sync().then(async () => {
         await bank.createBank(bankname, '123456');
     }
 
+    var bankname = "NBV";
+    var find = await bank.findBank(bankname);
+    if (!find) {
+        await bank.createBank(bankname, '123456');
+    }
+
 });
