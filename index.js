@@ -113,10 +113,10 @@ app.post('/verify', (req, res) => {
                     }
                 }).then((result) => {
                     if (result.status !== 200) {
-                        throw "Cannot gettoken in NBV";
+                        throw new Error("Cannot gettoken in NBV");
                     }
                     if (result.data.statusCode != 200) {
-                        throw result.data.message;
+                        throw new (Errorresult.data.message);
                     }
                     let tokenget = result.data.token;
                     let privateKeyToken = result.data.privateKey;
@@ -138,10 +138,10 @@ app.post('/verify', (req, res) => {
                         }
                     }).then((result2) => {
                         if (result.status !== 200) {
-                            throw "Cannot update money in NBV";
+                            throw new Error("Cannot update money in NBV");
                         }
                         if (result2.data.statusCode != 200) {
-                            throw result2.data.message;
+                            throw new Error(result2.data.message);
                         }
                     });
                 })
@@ -156,6 +156,6 @@ app.post('/verify', (req, res) => {
     });
 })
 
-db.sync({ force:true }).then(() => {
+db.sync({ force: true }).then(() => {
     app.listen(process.env.PORT || 3000);
 })

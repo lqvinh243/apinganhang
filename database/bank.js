@@ -74,6 +74,7 @@ Bank.init({
     base_url: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true
     }
 }, {
     sequelize: db,
