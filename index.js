@@ -72,7 +72,7 @@ app.post('/verify', (req, res) => {
     var token = req.headers['token'];
     let { privateKey, bankname, bankselect, money, idsend, content, idrecive } = req.body;
     if (!token) {
-        return res.json({ "err": "Invalid token" });
+        return res.json({ "statusCode": 401, "err": "Invalid token" });
     }
 
     jwt.verify(token, privateKey, async (err, decoded) => {
@@ -82,7 +82,7 @@ app.post('/verify', (req, res) => {
 
         console.log(decoded.bank !== bankname);
         if (decoded.bank !== req.body.bankname) {
-            return res.json({ "err": "Invalid token" });
+            return res.json({ "statusCode": 401, "err": "Invalid token" });
         }
 
         const findbankselect = await bank.findBank(bankselect);
