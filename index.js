@@ -46,12 +46,37 @@ app.post('/getAllbank', asyncHandler(async (req, res) => {
 
 app.post('/sign', asyncHandler(async (req, res) => {
     let { bankname, password } = req.body;
-    if (!bankname || !password) {
-        return res.json({ "statusCode": 401, "error": "Cant not verify bank" });
+    let bankselect = req.headers['bankselect'];
+    let idselect = req.headers['idselect'];
+    if (!bankselect || !idselect || !password || !bankname) {
+        return res.json({ "statusCode": 401, "error": "Cant not authorization" });
     }
     const find = await bank.findBank(bankname);
     if (!find || !bank.comparePassword(password, find.password)) {
         return res.json({ "statusCode": 401, "error": "Cant not verify bank" });
+    }
+
+    const findbankselect = await bank.findBank(bankselect);
+    if (!findbankselect || bankname === bankselect) {
+        return res.json({ "statusCode": 404, "error": "Cant not authorization" });
+    }
+
+    if (findbankselect.bankname === "NBV") {
+        const finduser = await axios({
+            method: 'post',
+            url: `${findbankselect.base_url}/findacountnumber`,
+            data: {
+                stk: idselect
+            },
+            headers: {
+                email: 'lqvinh243@gmail.com',
+                password: '123456'
+            }
+        });
+
+        if (finduser.status !== 200 || finduser.data.statusCode !== 200) {
+            return res.json({ "statusCode": 404, "error": "Some error or user not found!" });
+        }
     }
     var privateKey = rand.generate();
     jwt.sign({ bank: find.bankname }, privateKey, { expiresIn: '7m' }, function (err, token) {
@@ -80,7 +105,6 @@ app.post('/verify', (req, res) => {
             return res.json({ "statusCode": 401, "err": err });
         }
 
-        console.log(decoded.bank !== bankname);
         if (decoded.bank !== req.body.bankname) {
             return res.json({ "statusCode": 401, "err": "Invalid token" });
         }
