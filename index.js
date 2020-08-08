@@ -29,6 +29,53 @@ app.post('/createbank', asyncHandler(async (req, res) => {
     res.json({ "statusCode": 200, "message": "Register bankname successs!" });
 }));
 
+app.post('/finduserinbank', asyncHandler(async (req, res) => {
+    let bankname = req.headers["bankname"];
+    let id = req.headers["iduser"];
+
+    if (!bankname || !id) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
+    const findbankselect = await bank.findBank(bankname);
+    if (!findbankselect) {
+        return res.json({ "statusCode": 404, "error": "Cannot find bank!" });
+    }
+    if (bankname === "NBV") {
+        const finduser = await axios({
+            method: 'post',
+            url: `${findbankselect.base_url}/findacountnumber`,
+            data: {
+                stk: id
+            },
+            headers: {
+                email: 'lqvinh243@gmail.com',
+                password: '123456'
+            }
+        });
+
+        if (finduser.status !== 200 || finduser.data.statusCode !== 200) {
+            return res.json({ "statusCode": 404, "error": "Some error or user not found!" });
+        }
+        return res.json({ "statusCode": 200, "message": "Tìm thấy User", "us": finduser.data.user })
+    }
+    else if (bankname === "NH01") {
+        const finduser = await axios({
+            method: 'post',
+            url: `${findbankselect.base_url}/findacountnumber`,
+            data: {
+                stk: id
+            },
+            headers: {
+                username: 'NH01',
+                password: '123456'
+            }
+        });
+
+        if (finduser.status !== 200 || finduser.data.statusCode !== 200) {
+            return res.json({ "statusCode": 404, "error": "Some error or user not found!" });
+        }
+        return res.json({ "statusCode": 200, "message": "Tìm thấy User", "us": data.data.user })
+    }
+}));
+
 app.post('/getAllbank', asyncHandler(async (req, res) => {
     let bankname = req.headers["bankname"];
     let password = req.headers["password"];
