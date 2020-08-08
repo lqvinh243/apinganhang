@@ -64,7 +64,7 @@ app.post('/finduserinbank', asyncHandler(async (req, res) => {
                 stk: id
             },
             headers: {
-                username: 'NV01',
+                manv: 'NV01',
                 password: '123456'
             }
         });
