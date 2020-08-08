@@ -35,7 +35,7 @@ app.post('/finduserinbank', asyncHandler(async (req, res) => {
     let { bankuser, password } = req.body;
 
     if (!bankname || !id || !bankuser || !password) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
-    const authen = bank.findBank(bankuser);
+    const authen = await bank.findBank(bankuser);
     if (!authen || !bank.comparePassword(password, authen.password)) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
     const findbankselect = await bank.findBank(bankname);
     if (!findbankselect) {
