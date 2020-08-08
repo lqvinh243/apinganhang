@@ -59,12 +59,12 @@ app.post('/finduserinbank', asyncHandler(async (req, res) => {
     else if (bankname === "NH01") {
         const finduser = await axios({
             method: 'post',
-            url: `${findbankselect.base_url}/findacountnumber`,
+            url: `${findbankselect.base_url}/findUser`,
             data: {
                 stk: id
             },
             headers: {
-                username: 'NH01',
+                username: 'NV01',
                 password: '123456'
             }
         });
@@ -72,7 +72,7 @@ app.post('/finduserinbank', asyncHandler(async (req, res) => {
         if (finduser.status !== 200 || finduser.data.statusCode !== 200) {
             return res.json({ "statusCode": 404, "error": "Some error or user not found!" });
         }
-        return res.json({ "statusCode": 200, "message": "Tìm thấy User", "us": data.data.user })
+        return res.json({ "statusCode": 200, "message": "Tìm thấy User", "us": finduser.data.user })
     }
 }));
 
