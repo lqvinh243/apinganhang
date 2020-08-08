@@ -32,8 +32,11 @@ app.post('/createbank', asyncHandler(async (req, res) => {
 app.post('/finduserinbank', asyncHandler(async (req, res) => {
     let bankname = req.headers["bankname"];
     let id = req.headers["iduser"];
+    let { bankuser, password } = req.body;
 
-    if (!bankname || !id) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
+    if (!bankname || !id || !bankuser || !password) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
+    const authen = bank.findBank(bankuser);
+    if (!authen || !bank.comparePassword(password, authen.password)) { return res.json({ "statusCode": 401, "error": "Cant not authorization" }); }
     const findbankselect = await bank.findBank(bankname);
     if (!findbankselect) {
         return res.json({ "statusCode": 404, "error": "Cannot find bank!" });
